@@ -2,18 +2,18 @@
 <items version="2" >
 
     <item
-        jar="/home/panzer/dev/TestLibMuseAndroid/app/libs/libmuseandroid.jar"
+        jar="/home/panzer/dev/MuseMeToo/TestLibMuseAndroid/app/libs/libmuseandroid.jar"
         jumboMode="false"
         revision="21.1.2"
         sha1="29c9db643c9cd140b86ad1788d6b9fdf96983037">
-        <dex dex="/home/panzer/dev/TestLibMuseAndroid/app/build/intermediates/pre-dexed/debug/libmuseandroid-82068e72642de457badee9952e9709ea61655f63.jar" />
+        <dex dex="/home/panzer/dev/MuseMeToo/TestLibMuseAndroid/app/build/intermediates/pre-dexed/debug/libmuseandroid-c9faf577e20ee5a3cae12824109e0632afac5fd9.jar" />
     </item>
     <item
         jar="/home/panzer/Android/Sdk/extras/android/m2repository/com/android/support/support-v4/19.1.0/support-v4-19.1.0.jar"
         jumboMode="false"
         revision="21.1.2"
         sha1="85f201b380937e61a9dce6ca90ccf6872abbfb67">
-        <dex dex="/home/panzer/dev/TestLibMuseAndroid/app/build/intermediates/pre-dexed/debug/support-v4-19.1.0-5e865b2dfdc27e2ce4a1a7c2c16a0d8417d7b353.jar" />
+        <dex dex="/home/panzer/dev/MuseMeToo/TestLibMuseAndroid/app/build/intermediates/pre-dexed/debug/support-v4-19.1.0-5e865b2dfdc27e2ce4a1a7c2c16a0d8417d7b353.jar" />
     </item>
 
 </items>

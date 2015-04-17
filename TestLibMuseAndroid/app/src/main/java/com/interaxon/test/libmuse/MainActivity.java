@@ -5,6 +5,7 @@
 
 package com.interaxon.test.libmuse;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,9 @@ import com.interaxon.libmuse.MuseManager;
 import com.interaxon.libmuse.MusePreset;
 import com.interaxon.libmuse.MuseVersion;
 
+import data.MuseData;
+import data.Session;
+
 
 /**
  * In this simple example MainActivity implements 2 MuseHeadband listeners
@@ -65,6 +69,10 @@ public class MainActivity extends Activity implements OnClickListener {
     /**
      * Connection listener updates UI with new connection status and logs it.
      */
+    private Session SESSION;
+    private long START_TIME;
+    private String SUBJECT_NAME;
+
     class ConnectionListener extends MuseConnectionListener {
 
         final WeakReference<Activity> activityRef;
@@ -96,6 +104,16 @@ public class MainActivity extends Activity implements OnClickListener {
                         TextView museVersionText =
                                 (TextView) findViewById(R.id.version);
                         if (current == ConnectionState.CONNECTED) {
+
+                            START_TIME = System.currentTimeMillis();
+                            SUBJECT_NAME = "MUSER";
+                            SESSION  = new Session(START_TIME, SUBJECT_NAME );
+                            try {
+                                SESSION.startSession();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
                             MuseVersion museVersion = muse.getMuseVersion();
                             String version = museVersion.getFirmwareType() +
                                  " - " + museVersion.getFirmwareVersion() +
@@ -130,15 +148,23 @@ public class MainActivity extends Activity implements OnClickListener {
 
         @Override
         public void receiveMuseDataPacket(MuseDataPacket p) {
+            ArrayList<Double> _values = p.getValues();
+
             switch (p.getPacketType()) {
                 case EEG:
-                    updateEeg(p.getValues());
+                    updateEeg(p.getValues(),p.getTimestamp());
+
+
+                   // saveEEG(p.getTimestamp(),x,y,z,xx);
                     break;
                 case ACCELEROMETER:
-                    updateAccelerometer(p.getValues());
+                    updateAccelerometer(p.getValues(),p.getTimestamp());
+
                     break;
                 case ALPHA_RELATIVE:
-                    updateAlphaRelative(p.getValues());
+                    updateAlphaRelative(p.getValues(),p.getTimestamp());
+                    //saveELEMENTS(p.getTimestamp(), x, y, z, xx);
+
                     break;
                 default:
                     break;
@@ -152,27 +178,33 @@ public class MainActivity extends Activity implements OnClickListener {
             }
         }
 
-        private void updateAccelerometer(final ArrayList<Double> data) {
+        private void updateAccelerometer(final ArrayList<Double> data, final long timestamp) {
             Activity activity = activityRef.get();
             if (activity != null) {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         TextView acc_x = (TextView) findViewById(R.id.acc_x);
-                        TextView acc_y = (TextView) findViewById(R.id.acc_y);
+                        TextView acc_y = (TextView) findViewById(R  .id.acc_y);
                         TextView acc_z = (TextView) findViewById(R.id.acc_z);
+
+                        Double x = data.get(Accelerometer.FORWARD_BACKWARD.ordinal());
+                        Double y = data.get(Accelerometer.UP_DOWN.ordinal());
+                        Double z = data.get(Accelerometer.LEFT_RIGHT.ordinal());
                         acc_x.setText(String.format(
-                            "%6.2f", data.get(Accelerometer.FORWARD_BACKWARD.ordinal())));
+                            "%6.2f", x));
                         acc_y.setText(String.format(
-                            "%6.2f", data.get(Accelerometer.UP_DOWN.ordinal())));
+                            "%6.2f", y));
                         acc_z.setText(String.format(
-                            "%6.2f", data.get(Accelerometer.LEFT_RIGHT.ordinal())));
+                            "%6.2f", z));
+                        saveACC(timestamp, x.floatValue(), y.floatValue(), z.floatValue());
+
                     }
                 });
             }
         }
 
-        private void updateEeg(final ArrayList<Double> data) {
+        private void updateEeg(final ArrayList<Double> data, final long timestamp) {
             Activity activity = activityRef.get();
             if (activity != null) {
                 activity.runOnUiThread(new Runnable() {
@@ -182,20 +214,30 @@ public class MainActivity extends Activity implements OnClickListener {
                          TextView fp1 = (TextView) findViewById(R.id.eeg_fp1);
                          TextView fp2 = (TextView) findViewById(R.id.eeg_fp2);
                          TextView tp10 = (TextView) findViewById(R.id.eeg_tp10);
-                         tp9.setText(String.format(
-                            "%6.2f", data.get(Eeg.TP9.ordinal())));
+
+                        Double x = data.get(Eeg.TP9.ordinal());
+                        Double y = data.get(Eeg.FP1.ordinal());
+                        Double z = data.get(Eeg.FP2.ordinal());
+                        Double xx = data.get(Eeg.TP10.ordinal());
+                        tp9.setText(String.format(
+                                "%6.2f", x));
                          fp1.setText(String.format(
-                            "%6.2f", data.get(Eeg.FP1.ordinal())));
+                            "%6.2f", y));
                          fp2.setText(String.format(
-                            "%6.2f", data.get(Eeg.FP2.ordinal())));
+                            "%6.2f", z));
                          tp10.setText(String.format(
-                            "%6.2f", data.get(Eeg.TP10.ordinal())));
+                            "%6.2f", xx));
+
+
+                        //call saveEEG
+                        saveEEG(timestamp,x.floatValue(),y.floatValue(),z.floatValue(),xx.floatValue());
+
                     }
                 });
             }
         }
 
-        private void updateAlphaRelative(final ArrayList<Double> data) {
+        private void updateAlphaRelative(final ArrayList<Double> data, final long timestamp) {
             Activity activity = activityRef.get();
             if (activity != null) {
                 activity.runOnUiThread(new Runnable() {
@@ -205,20 +247,49 @@ public class MainActivity extends Activity implements OnClickListener {
                          TextView elem2 = (TextView) findViewById(R.id.elem2);
                          TextView elem3 = (TextView) findViewById(R.id.elem3);
                          TextView elem4 = (TextView) findViewById(R.id.elem4);
+
+
+                        Double x = data.get(Eeg.TP9.ordinal());
+                        Double y = data.get(Eeg.FP1.ordinal());
+                        Double z = data.get(Eeg.FP2.ordinal());
+                        Double xx = data.get(Eeg.TP10.ordinal());
+
                          elem1.setText(String.format(
-                            "%6.2f", data.get(Eeg.TP9.ordinal())));
+                            "%6.2f", x));
                          elem2.setText(String.format(
-                            "%6.2f", data.get(Eeg.FP1.ordinal())));
+                            "%6.2f", y));
                          elem3.setText(String.format(
-                            "%6.2f", data.get(Eeg.FP2.ordinal())));
+                            "%6.2f", z));
                          elem4.setText(String.format(
-                            "%6.2f", data.get(Eeg.TP10.ordinal())));
+                            "%6.2f", xx));
+                        //call saveEEG
+                        saveELEMENTS(timestamp,x.floatValue(),y.floatValue(),z.floatValue(),xx.floatValue());
                     }
                 });
             }
         }
     }
-
+    private void saveEEG(long timestamp, float valueX, float valueY, float valueZ,float valueXX){
+        try {
+            SESSION.addMuseData(new MuseData(valueX,valueY,valueZ,valueXX,timestamp, MuseData.MuseDataType.EEG));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void saveACC(long timestamp, float valueX, float valueY, float valueZ){
+        try {
+            SESSION.addMuseData(new MuseData(valueX,valueY,valueZ,timestamp, MuseData.MuseDataType.ACC));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void saveELEMENTS(long timestamp, float valueX, float valueY, float valueZ,float valueXX){
+        try {
+            SESSION.addMuseData(new MuseData(valueX,valueY,valueZ,valueXX,timestamp, MuseData.MuseDataType.MUSELEMENT));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private Muse muse = null;
     private ConnectionListener connectionListener = null;
     private DataListener dataListener = null;
@@ -262,6 +333,8 @@ public class MainActivity extends Activity implements OnClickListener {
             ArrayAdapter<String> adapterArray = new ArrayAdapter<String> (
                     this, android.R.layout.simple_spinner_item, spinnerItems);
             musesSpinner.setAdapter(adapterArray);
+
+
         }
         else if (v.getId() == R.id.connect) {
             List<Muse> pairedMuses = MuseManager.getPairedMuses();
@@ -303,6 +376,11 @@ public class MainActivity extends Activity implements OnClickListener {
                  * muse.disconnect(false);
                  */
                 muse.disconnect(true);
+                try {
+                    SESSION.saveSession();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         else if (v.getId() == R.id.pause) {
